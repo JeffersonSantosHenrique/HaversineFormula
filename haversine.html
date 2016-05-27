@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Haversine Formula</title>    
+</head>
+<body>
+    <p id="demo">Click the button to get your position:</p>
+    <button onclick="getLocation()">Show my location</button>
+
+    <p>Latitude:  <input type="text" id="latitude"></p>
+    <p>Longitude: <input type="text" id="longitude"></p>
+
+    <button onclick="getDistance()">What's the distance?</button>
+    <p id="distance">0</p>
+
+    <div id="mapholder"></div>
+
+    <script>
+        var x = document.getElementById("demo");
+        var d = document.getElementById("distance");
+
+        function getLocation(){
+            
+            if (navigator.geolocation){
+                
+                navigator.geolocation.getCurrentPosition(function(pos){
+
+                    var latlon = pos.coords.latitude + "," + pos.coords.longitude;
+
+                    var img_url = 'https://maps.googleapis.com/maps/api/staticmap?center=' + latlon + '&zoom=16&size=640x640&sensor=false&markers=color:red%7C' + latlon + 
+                      '&maptype=roadmap';
+                    document.getElementById("mapholder").innerHTML = "<img src='" + img_url +"'>";
+
+                }, function(err){
+
+                    switch(err.code) {
+                        case err.PERMISSION_DENIED:
+                            x.innerHTML="User denied the request for Geolocation."
+                            break;
+                        case err.POSITION_UNAVAILABLE:
+                            x.innerHTML="Location information is unavailable."
+                            break;
+                        case err.TIMEOUT:
+                            x.innerHTML="The request to get user location timed out."
+                            break;
+                        case err.UNKNOWN_ERROR:
+                            x.innerHTML="An unknown error occurred."
+                            break;
+                    }
+
+                });
+
+            } else{
+                x.innerHTML="Geolocation is not supported by this browser.";
+            }
+
+        }
+
+        function getDistance(){
+
+            function radians(degrees){                
+                return degrees * (Math.PI / 180);
+            }
+
+            Number.prototype.toFixedDown = function(digits) {
+                var re = new RegExp("(\\d+\\.\\d{" + digits + "})(\\d)"),
+                    m = this.toString().match(re);
+                return m ? parseFloat(m[1]) : this.valueOf();
+            }
+
+            var latDest = document.getElementById("latitude").value;
+            var lonDest = document.getElementById("longitude").value;
+
+            navigator.geolocation.getCurrentPosition(function(pos){
+
+                var distancia = 6371000 * 
+                                (Math.acos(
+                                    Math.cos(radians(latDest)) *
+                                    Math.cos(radians(pos.coords.latitude)) *
+                                    Math.cos(radians(pos.coords.longitude) - radians(lonDest)) +
+                                    Math.sin(radians(latDest)) * Math.sin(radians(pos.coords.latitude))
+                                ));                    
+
+                if (distancia > 1000){                        
+                    d.innerHTML = (distancia / 1000).toFixedDown(2) + ' km';                      
+                } else {
+                    d.innerHTML = distancia.toFixedDown(2) + ' m';
+                }
+
+            }, function(err){
+                d.innerHTML = err;
+            });
+
+        }
+
+    </script>
+</body>
+</html>
